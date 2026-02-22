@@ -10,6 +10,10 @@ Este Add-In replica la logica de `app.py` en una UI dentro de MyGeotab.
 - Resumen superior con contadores:
   - ODOMETRO vs GPS
   - MOTOR vs GPS
+- Resumen por `marca modelo`:
+  - total, ODOMETRO, GPS (odometro), % GPS (odometro), MOTOR, GPS (motor), % GPS (motor)
+  - alerta visual cuando `% GPS (odometro) > 20%`
+  - clic en `marca modelo` para filtrar el detalle automaticamente
 - Filtros:
   - `marca modelo` (aplica a ambos tabs)
   - fuente en `Odómetro`: `Todos / ODOMETRO / GPS`

@@ -8,6 +8,7 @@
   var TOKEN_STORAGE_KEY = "odometro.myadmin.token";
   var REGION_STORAGE_KEY = "odometro.myadmin.region";
   var LOOKBACK_STORAGE_KEY = "odometro.lookback.days";
+  var MODEL_ALERT_GPS_PCT = 20;
 
   function normalizeVin(vin) {
     if (!vin) return null;
@@ -147,6 +148,10 @@
       engineSort: {
         key: "vehicle",
         direction: "asc",
+      },
+      modelSort: {
+        key: "odometerGpsPct",
+        direction: "desc",
       },
     };
 
@@ -422,6 +427,98 @@
       });
     }
 
+    function buildModelSummary(rows) {
+      var byModel = Object.create(null);
+      rows.forEach(function (row) {
+        var model = (row.brandModel || "Sin marca/modelo").trim();
+        if (!byModel[model]) {
+          byModel[model] = {
+            brandModel: model,
+            total: 0,
+            odometerCount: 0,
+            odometerGpsCount: 0,
+            motorCount: 0,
+            motorGpsCount: 0,
+            odometerGpsPct: 0,
+            motorGpsPct: 0,
+          };
+        }
+        var item = byModel[model];
+        item.total += 1;
+        if (row.source === "ODOMETRO") item.odometerCount += 1;
+        else item.odometerGpsCount += 1;
+        if (row.engineSource === "MOTOR") item.motorCount += 1;
+        else item.motorGpsCount += 1;
+      });
+
+      var summary = Object.keys(byModel).map(function (key) {
+        var item = byModel[key];
+        item.odometerGpsPct = item.total ? (item.odometerGpsCount * 100) / item.total : 0;
+        item.motorGpsPct = item.total ? (item.motorGpsCount * 100) / item.total : 0;
+        return item;
+      });
+      return summary;
+    }
+
+    function sortModelSummary(rows) {
+      var sorted = rows.slice();
+      var key = state.modelSort.key;
+      var direction = state.modelSort.direction === "desc" ? -1 : 1;
+      sorted.sort(function (a, b) {
+        var av = a[key];
+        var bv = b[key];
+        if (key === "brandModel") {
+          av = String(av || "").toLowerCase();
+          bv = String(bv || "").toLowerCase();
+        } else {
+          av = Number(av || 0);
+          bv = Number(bv || 0);
+        }
+        if (av < bv) return -1 * direction;
+        if (av > bv) return 1 * direction;
+        return 0;
+      });
+      return sorted;
+    }
+
+    function updateModelHeaderSortUi() {
+      var headers = document.querySelectorAll("#modelSummaryTable thead th[data-model-sort-key]");
+      headers.forEach(function (th) {
+        var key = th.getAttribute("data-model-sort-key");
+        var arrow = "";
+        if (key === state.modelSort.key) {
+          arrow = state.modelSort.direction === "asc" ? " ▲" : " ▼";
+        }
+        var baseLabel = th.textContent.replace(/[ ▲▼]+$/, "");
+        th.textContent = baseLabel + arrow;
+      });
+    }
+
+    function renderModelSummary(rows) {
+      var body = document.querySelector("#modelSummaryTable tbody");
+      if (!body) return;
+      var summaryRows = sortModelSummary(buildModelSummary(rows));
+      updateModelHeaderSortUi();
+      body.innerHTML = summaryRows
+        .map(function (row) {
+          var alertClass = row.odometerGpsPct > MODEL_ALERT_GPS_PCT ? "alert" : "";
+          var encodedModel = encodeURIComponent(row.brandModel);
+          return (
+            "<tr class=\"" + alertClass + "\">" +
+            "<td><span class=\"model-click\" data-brand-model=\"" + encodedModel + "\">" + escapeHtml(row.brandModel) + "</span></td>" +
+            "<td>" + escapeHtml(String(row.total)) + "</td>" +
+            "<td>" + escapeHtml(String(row.odometerCount)) + "</td>" +
+            "<td>" + escapeHtml(String(row.odometerGpsCount)) + "</td>" +
+            "<td>" + escapeHtml(fmtNumber(row.odometerGpsPct, 2) + "%") + "</td>" +
+            "<td>" + escapeHtml(String(row.motorCount)) + "</td>" +
+            "<td>" + escapeHtml(String(row.motorGpsCount)) + "</td>" +
+            "<td>" + escapeHtml(fmtNumber(row.motorGpsPct, 2) + "%") + "</td>" +
+            "</tr>"
+          );
+        })
+        .join("");
+    }
+
     function renderTables(rows) {
       var odometerBody = document.querySelector("#odometerTable tbody");
       var engineBody = document.querySelector("#engineTable tbody");
@@ -430,6 +527,7 @@
       var engineRows = sortEngineRows(filterEngineRows(rows));
       updateOdometerHeaderSortUi();
       updateEngineHeaderSortUi();
+      renderModelSummary(rows);
 
       odometerBody.innerHTML = odometerRows
         .map(function (row) {
@@ -615,6 +713,7 @@
       var brandModelFilter = document.getElementById("brandModelFilter");
       var odometerSourceFilter = document.getElementById("odometerSourceFilter");
       var engineSourceFilter = document.getElementById("engineSourceFilter");
+      var modelHeaders = document.querySelectorAll("#modelSummaryTable thead th[data-model-sort-key]");
 
       tokenInput.value = localStorage.getItem(TOKEN_STORAGE_KEY) || "";
       regionInput.value = localStorage.getItem(REGION_STORAGE_KEY) || "2";
@@ -689,6 +788,35 @@
           renderTables(state.rows);
         });
       });
+
+      modelHeaders.forEach(function (th) {
+        th.style.cursor = "pointer";
+        th.addEventListener("click", function () {
+          var key = th.getAttribute("data-model-sort-key");
+          if (!key) return;
+          if (state.modelSort.key === key) {
+            state.modelSort.direction = state.modelSort.direction === "asc" ? "desc" : "asc";
+          } else {
+            state.modelSort.key = key;
+            state.modelSort.direction = "desc";
+          }
+          renderModelSummary(state.rows);
+        });
+      });
+
+      var modelSummaryBody = document.querySelector("#modelSummaryTable tbody");
+      if (modelSummaryBody && brandModelFilter) {
+        modelSummaryBody.addEventListener("click", function (event) {
+          var target = event.target;
+          if (!target || !target.classList || !target.classList.contains("model-click")) return;
+          var encodedModel = target.getAttribute("data-brand-model") || "";
+          var model = decodeURIComponent(encodedModel);
+          brandModelFilter.value = model;
+          state.filter.brandModelQuery = model;
+          renderTables(state.rows);
+          setStatus("Filtro marca modelo aplicado: " + model);
+        });
+      }
     }
 
     return {

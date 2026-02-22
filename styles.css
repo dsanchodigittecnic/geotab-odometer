@@ -88,6 +88,24 @@ button:hover {
   font-size: 12px;
 }
 
+#modelSummarySection {
+  margin-bottom: 14px;
+}
+
+#modelSummaryTable tbody tr.alert td {
+  background: #fff0f0;
+}
+
+#modelSummaryTable tbody tr:hover td {
+  background: #f8fbff;
+}
+
+.model-click {
+  color: #2a7de1;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .tabs {
   display: flex;
   gap: 8px;
