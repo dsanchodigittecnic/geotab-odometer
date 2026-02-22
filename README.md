@@ -1,4 +1,4 @@
-# Add-In Geotab: Odometro y Horas Motor
+# Add-In Geotab: Odómetro y Horas Motor
 
 Este Add-In replica la logica de `app.py` en una UI dentro de MyGeotab.
 
