@@ -79,6 +79,31 @@
     if (line) line.textContent = message;
   }
 
+  function updateSummary(rows) {
+    var odometerCount = 0;
+    var odometerGpsCount = 0;
+    var motorCount = 0;
+    var motorGpsCount = 0;
+
+    rows.forEach(function (row) {
+      if (row.source === "ODOMETRO") odometerCount += 1;
+      else odometerGpsCount += 1;
+
+      if (row.engineSource === "MOTOR") motorCount += 1;
+      else motorGpsCount += 1;
+    });
+
+    var c1 = document.getElementById("countOdometer");
+    var c2 = document.getElementById("countGpsOdometer");
+    var c3 = document.getElementById("countMotor");
+    var c4 = document.getElementById("countGpsMotor");
+
+    if (c1) c1.textContent = "ODOMETRO: " + odometerCount;
+    if (c2) c2.textContent = "GPS: " + odometerGpsCount;
+    if (c3) c3.textContent = "MOTOR: " + motorCount;
+    if (c4) c4.textContent = "GPS: " + motorGpsCount;
+  }
+
   function setActiveTab(tabName) {
     var odometerSection = document.getElementById("odometerSection");
     var engineSection = document.getElementById("engineSection");
@@ -107,6 +132,10 @@
       loaded: false,
       rows: [],
       sort: {
+        key: "vehicle",
+        direction: "asc",
+      },
+      engineSort: {
         key: "vehicle",
         direction: "asc",
       },
@@ -314,12 +343,56 @@
       });
     }
 
+    function sortEngineRows(rows) {
+      var sorted = rows.slice();
+      var key = state.engineSort.key;
+      var direction = state.engineSort.direction === "desc" ? -1 : 1;
+      sorted.sort(function (a, b) {
+        var av = a[key];
+        var bv = b[key];
+
+        if (key === "engineDate") {
+          av = av ? new Date(av).getTime() : -Infinity;
+          bv = bv ? new Date(bv).getTime() : -Infinity;
+        } else if (key === "engineAgeMinutes") {
+          av = a.engineAgeMinutes == null ? Infinity : a.engineAgeMinutes;
+          bv = b.engineAgeMinutes == null ? Infinity : b.engineAgeMinutes;
+        } else if (key === "engineHours" || key === "engineSupported") {
+          av = av == null ? -Infinity : Number(av);
+          bv = bv == null ? -Infinity : Number(bv);
+        } else {
+          av = String(av || "").toLowerCase();
+          bv = String(bv || "").toLowerCase();
+        }
+
+        if (av < bv) return -1 * direction;
+        if (av > bv) return 1 * direction;
+        return 0;
+      });
+      return sorted;
+    }
+
+    function updateEngineHeaderSortUi() {
+      var headers = document.querySelectorAll("#engineTable thead th[data-engine-sort-key]");
+      headers.forEach(function (th) {
+        var key = th.getAttribute("data-engine-sort-key");
+        var arrow = "";
+        if (key === state.engineSort.key) {
+          arrow = state.engineSort.direction === "asc" ? " ▲" : " ▼";
+        }
+        var baseLabel = th.textContent.replace(/[ ▲▼]+$/, "");
+        th.textContent = baseLabel + arrow;
+      });
+    }
+
     function renderTables(rows) {
       var odometerBody = document.querySelector("#odometerTable tbody");
       var engineBody = document.querySelector("#engineTable tbody");
       if (!odometerBody || !engineBody) return;
       var odometerRows = sortOdometerRows(rows);
+      var engineRows = sortEngineRows(rows);
       updateOdometerHeaderSortUi();
+      updateEngineHeaderSortUi();
 
       odometerBody.innerHTML = odometerRows
         .map(function (row) {
@@ -337,7 +410,7 @@
         })
         .join("");
 
-      engineBody.innerHTML = rows
+      engineBody.innerHTML = engineRows
         .map(function (row) {
           return (
             "<tr>" +
@@ -477,6 +550,7 @@
             engineSource: engineRecent ? "MOTOR" : "GPS",
             engineHours: engineRecent ? engineSecondsToHours(engineRecent.data) : null,
             engineDate: engineRecent ? engineRecent.dateTime : null,
+            engineAgeMinutes: ageMinutes(engineRecent ? engineRecent.dateTime : null),
             engineSupported: support.engineHours,
           };
         });
@@ -485,6 +559,7 @@
           return a.vehicle.localeCompare(b.vehicle);
         });
         state.rows = rows;
+        updateSummary(rows);
         renderTables(rows);
         setStatus("Listo. Filas: " + rows.length);
       } catch (error) {
@@ -530,6 +605,22 @@
           } else {
             state.sort.key = key;
             state.sort.direction = "asc";
+          }
+          renderTables(state.rows);
+        });
+      });
+
+      var engineHeaders = document.querySelectorAll("#engineTable thead th[data-engine-sort-key]");
+      engineHeaders.forEach(function (th) {
+        th.style.cursor = "pointer";
+        th.addEventListener("click", function () {
+          var key = th.getAttribute("data-engine-sort-key");
+          if (!key) return;
+          if (state.engineSort.key === key) {
+            state.engineSort.direction = state.engineSort.direction === "asc" ? "desc" : "asc";
+          } else {
+            state.engineSort.key = key;
+            state.engineSort.direction = "asc";
           }
           renderTables(state.rows);
         });

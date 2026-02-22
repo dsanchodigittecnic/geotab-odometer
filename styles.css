@@ -70,6 +70,24 @@ button:hover {
   color: #34495e;
 }
 
+.summary {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
 .tabs {
   display: flex;
   gap: 8px;

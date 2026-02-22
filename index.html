@@ -31,6 +31,18 @@
       </header>
 
       <p id="statusLine" class="status">Listo.</p>
+      <div class="summary">
+        <div class="summary-card">
+          <strong>odometro</strong>
+          <span id="countOdometer">ODOMETRO: 0</span>
+          <span id="countGpsOdometer">GPS: 0</span>
+        </div>
+        <div class="summary-card">
+          <strong>HorasMotor</strong>
+          <span id="countMotor">MOTOR: 0</span>
+          <span id="countGpsMotor">GPS: 0</span>
+        </div>
+      </div>
 
       <div class="tabs">
         <button id="tabOdometer" class="tab active" type="button">odometro</button>
@@ -63,13 +75,13 @@
           <table id="engineTable">
             <thead>
               <tr>
-                <th>vehiculo</th>
-                <th>marca modelo</th>
-                <th>motor</th>
-                <th>horas_motor</th>
-                <th>hace_cuanto</th>
-                <th>fecha_dato</th>
-                <th>Soportado</th>
+                <th data-engine-sort-key="vehicle">vehiculo</th>
+                <th data-engine-sort-key="brandModel">marca modelo</th>
+                <th data-engine-sort-key="engineSource">motor</th>
+                <th data-engine-sort-key="engineHours">horas_motor</th>
+                <th data-engine-sort-key="engineAgeMinutes">hace_cuanto</th>
+                <th data-engine-sort-key="engineDate">fecha_dato</th>
+                <th data-engine-sort-key="engineSupported">Soportado</th>
               </tr>
             </thead>
             <tbody></tbody>

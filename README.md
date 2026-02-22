@@ -1,34 +1,46 @@
 # Add-In Geotab: Odometro y Horas Motor
 
-Esta carpeta contiene un Add-In para MyGeotab que replica la logica de `app.py`:
+Este Add-In replica la logica de `app.py` en una UI dentro de MyGeotab.
 
-- Tabla `odometro` con:
+## Funcionalidades
+
+- Dos tabs:
+  - `odometro`
+  - `HorasMotor`
+- Resumen superior con contadores:
+  - ODOMETRO vs GPS
+  - MOTOR vs GPS
+- Tabla `odometro` con columnas:
   - `vehiculo`, `marca modelo`, `fuente`, `odometro_km`, `hace_cuanto`, `fecha_dato`, `Soportado`
-- Tabla `HorasMotor` con:
+- Tabla `HorasMotor` con columnas:
   - `vehiculo`, `marca modelo`, `motor`, `horas_motor`, `hace_cuanto`, `fecha_dato`, `Soportado`
-- Boton para descargar Excel (`reporte_odometro.xlsx`) con ambas hojas.
+- Ordenacion por clic en cabeceras (asc/desc) en ambas tablas.
+- Exportacion a Excel (`reporte_odometro.xlsx`) con hojas:
+  - `odometro`
+  - `HorasMotor`
 
 ## Archivos
 
-- `index.html`: vista del Add-In.
-- `app.js`: logica de carga de datos, render y export Excel.
+- `index.html`: estructura de la pagina, tabs y tablas.
+- `app.js`: carga de datos (MyGeotab + ByVins), render, resumen, ordenacion y export Excel.
 - `styles.css`: estilos.
-- `icon.svg`: icono para el menu.
-- `addin.json`: manifiesto de ejemplo para registrar el Add-In.
+- `icon.svg`: icono del menu.
+- `addin.json`: manifiesto del Add-In.
 
 ## Publicacion
 
-1. Sube el contenido de `addin/` a un host HTTPS accesible.
-2. Actualiza en `addin.json`:
-   - `url`: URL real de `index.html`.
-   - `icon`: URL real de `icon.svg`.
+1. Publica esta carpeta (`addin/geotab-odometer/`) en un host HTTPS.
+2. Verifica `addin.json`:
+   - `url`: URL publica de `index.html`.
+   - `icon`: URL publica de `icon.svg`.
    - `supportEmail`.
 3. En MyGeotab:
    - Admin -> System -> Add-Ins -> Add-In Management.
-   - Carga el `addin.json`.
+   - Carga/actualiza el `addin.json`.
 
 ## Notas
 
 - El token de `myadmin.geotab.com` se introduce en la UI del Add-In.
-- El token y parametros (`regionId`, `lookback`) se guardan en `localStorage`.
-- Si el endpoint `ByVins` falla o no hay token, las columnas `Soportado` y `marca modelo` pueden quedar vacias.
+- Se guardan en `localStorage`: token, `regionId`, `lookback`.
+- Si falla `ByVins` o no hay token:
+  - `Soportado` y `marca modelo` pueden quedar vacios.
