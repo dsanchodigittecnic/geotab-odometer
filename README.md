@@ -20,7 +20,7 @@ Esta carpeta contiene un Add-In para MyGeotab que replica la logica de `app.py`:
 
 1. Sube el contenido de `addin/` a un host HTTPS accesible.
 2. Actualiza en `addin.json`:
-   - `page`: URL real de `index.html`.
+   - `url`: URL real de `index.html`.
    - `icon`: URL real de `icon.svg`.
    - `supportEmail`.
 3. En MyGeotab:

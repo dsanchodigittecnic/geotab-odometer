@@ -4,11 +4,8 @@
   "version": "1.0.0",
   "items": [
     {
-      "page": "https://dsanchodigittecnic.github.io/geotab-odometer/index.html",
-      "title": {
-        "en": "Odometro Dashboard",
-        "es": "Panel Odometro"
-      },
+      "url": "https://dsanchodigittecnic.github.io/geotab-odometer/index.html",
+      "path": "",
       "icon": "https://dsanchodigittecnic.github.io/geotab-odometer/icon.svg",
       "menuName": {
         "en": "Odometro",
