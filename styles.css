@@ -70,6 +70,28 @@ button:hover {
   color: #34495e;
 }
 
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tab {
+  background: #e9f1fb;
+  color: #1f2d3d;
+  border-color: #c8d9ef;
+}
+
+.tab.active {
+  background: #2a7de1;
+  color: #fff;
+  border-color: #2a7de1;
+}
+
+.hidden {
+  display: none;
+}
+
 section {
   margin-bottom: 20px;
 }

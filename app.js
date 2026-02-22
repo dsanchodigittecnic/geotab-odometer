@@ -58,6 +58,13 @@
     return "hace <1 min";
   }
 
+  function ageMinutes(dateValue) {
+    if (!dateValue) return null;
+    var date = new Date(dateValue);
+    if (isNaN(date.getTime())) return null;
+    return Math.floor((Date.now() - date.getTime()) / 60000);
+  }
+
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, "&amp;")
@@ -70,6 +77,20 @@
   function setStatus(message) {
     var line = document.getElementById("statusLine");
     if (line) line.textContent = message;
+  }
+
+  function setActiveTab(tabName) {
+    var odometerSection = document.getElementById("odometerSection");
+    var engineSection = document.getElementById("engineSection");
+    var tabOdometer = document.getElementById("tabOdometer");
+    var tabEngine = document.getElementById("tabEngine");
+    if (!odometerSection || !engineSection || !tabOdometer || !tabEngine) return;
+
+    var showOdometer = tabName !== "engine";
+    odometerSection.classList.toggle("hidden", !showOdometer);
+    engineSection.classList.toggle("hidden", showOdometer);
+    tabOdometer.classList.toggle("active", showOdometer);
+    tabEngine.classList.toggle("active", !showOdometer);
   }
 
   function chunkArray(values, size) {
@@ -85,6 +106,10 @@
     var state = {
       loaded: false,
       rows: [],
+      sort: {
+        key: "vehicle",
+        direction: "asc",
+      },
     };
 
     function apiGet(typeName, search, extra) {
@@ -247,12 +272,56 @@
       return support;
     }
 
+    function sortOdometerRows(rows) {
+      var sorted = rows.slice();
+      var key = state.sort.key;
+      var direction = state.sort.direction === "desc" ? -1 : 1;
+      sorted.sort(function (a, b) {
+        var av = a[key];
+        var bv = b[key];
+
+        if (key === "dataDate") {
+          av = av ? new Date(av).getTime() : -Infinity;
+          bv = bv ? new Date(bv).getTime() : -Infinity;
+        } else if (key === "ageMinutes") {
+          av = a.ageMinutes == null ? Infinity : a.ageMinutes;
+          bv = b.ageMinutes == null ? Infinity : b.ageMinutes;
+        } else if (key === "odometerKm" || key === "odometerSupported") {
+          av = av == null ? -Infinity : Number(av);
+          bv = bv == null ? -Infinity : Number(bv);
+        } else {
+          av = String(av || "").toLowerCase();
+          bv = String(bv || "").toLowerCase();
+        }
+
+        if (av < bv) return -1 * direction;
+        if (av > bv) return 1 * direction;
+        return 0;
+      });
+      return sorted;
+    }
+
+    function updateOdometerHeaderSortUi() {
+      var headers = document.querySelectorAll("#odometerTable thead th[data-sort-key]");
+      headers.forEach(function (th) {
+        var key = th.getAttribute("data-sort-key");
+        var arrow = "";
+        if (key === state.sort.key) {
+          arrow = state.sort.direction === "asc" ? " ▲" : " ▼";
+        }
+        var baseLabel = th.textContent.replace(/[ ▲▼]+$/, "");
+        th.textContent = baseLabel + arrow;
+      });
+    }
+
     function renderTables(rows) {
       var odometerBody = document.querySelector("#odometerTable tbody");
       var engineBody = document.querySelector("#engineTable tbody");
       if (!odometerBody || !engineBody) return;
+      var odometerRows = sortOdometerRows(rows);
+      updateOdometerHeaderSortUi();
 
-      odometerBody.innerHTML = rows
+      odometerBody.innerHTML = odometerRows
         .map(function (row) {
           return (
             "<tr>" +
@@ -403,6 +472,7 @@
             source: source,
             odometerKm: odometerKm,
             dataDate: dataDate,
+            ageMinutes: ageMinutes(dataDate),
             odometerSupported: support.odometer,
             engineSource: engineRecent ? "MOTOR" : "GPS",
             engineHours: engineRecent ? engineSecondsToHours(engineRecent.data) : null,
@@ -428,6 +498,8 @@
       var tokenInput = document.getElementById("myadminToken");
       var regionInput = document.getElementById("regionId");
       var lookbackInput = document.getElementById("lookbackDays");
+      var tabOdometer = document.getElementById("tabOdometer");
+      var tabEngine = document.getElementById("tabEngine");
 
       tokenInput.value = localStorage.getItem(TOKEN_STORAGE_KEY) || "";
       regionInput.value = localStorage.getItem(REGION_STORAGE_KEY) || "2";
@@ -435,6 +507,33 @@
 
       refreshBtn.addEventListener("click", loadData);
       downloadBtn.addEventListener("click", downloadExcel);
+      if (tabOdometer) {
+        tabOdometer.addEventListener("click", function () {
+          setActiveTab("odometer");
+        });
+      }
+      if (tabEngine) {
+        tabEngine.addEventListener("click", function () {
+          setActiveTab("engine");
+        });
+      }
+      setActiveTab("odometer");
+
+      var odometerHeaders = document.querySelectorAll("#odometerTable thead th[data-sort-key]");
+      odometerHeaders.forEach(function (th) {
+        th.style.cursor = "pointer";
+        th.addEventListener("click", function () {
+          var key = th.getAttribute("data-sort-key");
+          if (!key) return;
+          if (state.sort.key === key) {
+            state.sort.direction = state.sort.direction === "asc" ? "desc" : "asc";
+          } else {
+            state.sort.key = key;
+            state.sort.direction = "asc";
+          }
+          renderTables(state.rows);
+        });
+      });
     }
 
     return {

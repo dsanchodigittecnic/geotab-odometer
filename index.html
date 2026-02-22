@@ -32,19 +32,24 @@
 
       <p id="statusLine" class="status">Listo.</p>
 
-      <section>
+      <div class="tabs">
+        <button id="tabOdometer" class="tab active" type="button">odometro</button>
+        <button id="tabEngine" class="tab" type="button">HorasMotor</button>
+      </div>
+
+      <section id="odometerSection">
         <h2>odometro</h2>
         <div class="table-wrap">
           <table id="odometerTable">
             <thead>
               <tr>
-                <th>vehiculo</th>
-                <th>marca modelo</th>
-                <th>fuente</th>
-                <th>odometro_km</th>
-                <th>hace_cuanto</th>
-                <th>fecha_dato</th>
-                <th>Soportado</th>
+                <th data-sort-key="vehicle">vehiculo</th>
+                <th data-sort-key="brandModel">marca modelo</th>
+                <th data-sort-key="source">fuente</th>
+                <th data-sort-key="odometerKm">odometro_km</th>
+                <th data-sort-key="ageMinutes">hace_cuanto</th>
+                <th data-sort-key="dataDate">fecha_dato</th>
+                <th data-sort-key="odometerSupported">Soportado</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -52,7 +57,7 @@
         </div>
       </section>
 
-      <section>
+      <section id="engineSection" class="hidden">
         <h2>HorasMotor</h2>
         <div class="table-wrap">
           <table id="engineTable">
