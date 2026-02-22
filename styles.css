@@ -1,0 +1,108 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  color: #17202a;
+  background: #f4f7fb;
+}
+
+.app {
+  padding: 16px;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.toolbar h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+input {
+  min-width: 120px;
+  padding: 6px 8px;
+  border: 1px solid #c6d0dc;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.token input {
+  min-width: 320px;
+}
+
+button {
+  padding: 8px 12px;
+  border: 1px solid #2a7de1;
+  border-radius: 6px;
+  background: #2a7de1;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #246dc5;
+}
+
+.status {
+  margin: 8px 0 16px 0;
+  font-size: 13px;
+  color: #34495e;
+}
+
+section {
+  margin-bottom: 20px;
+}
+
+section h2 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.table-wrap {
+  overflow: auto;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+th,
+td {
+  border-bottom: 1px solid #edf1f6;
+  padding: 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+thead th {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}

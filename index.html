@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Odometro y Horas Motor</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="./app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="toolbar">
+        <h1>Odometro y Horas Motor</h1>
+        <div class="controls">
+          <label>
+            Lookback dias
+            <input id="lookbackDays" type="number" min="1" max="365" value="30" />
+          </label>
+          <label>
+            RegionId
+            <input id="regionId" type="number" min="1" value="2" />
+          </label>
+          <label class="token">
+            MyAdmin Bearer token
+            <input id="myadminToken" type="password" autocomplete="off" />
+          </label>
+          <button id="refreshBtn" type="button">Actualizar</button>
+          <button id="downloadBtn" type="button">Descargar Excel</button>
+        </div>
+      </header>
+
+      <p id="statusLine" class="status">Listo.</p>
+
+      <section>
+        <h2>odometro</h2>
+        <div class="table-wrap">
+          <table id="odometerTable">
+            <thead>
+              <tr>
+                <th>vehiculo</th>
+                <th>marca modelo</th>
+                <th>fuente</th>
+                <th>odometro_km</th>
+                <th>hace_cuanto</th>
+                <th>fecha_dato</th>
+                <th>Soportado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>HorasMotor</h2>
+        <div class="table-wrap">
+          <table id="engineTable">
+            <thead>
+              <tr>
+                <th>vehiculo</th>
+                <th>marca modelo</th>
+                <th>motor</th>
+                <th>horas_motor</th>
+                <th>hace_cuanto</th>
+                <th>fecha_dato</th>
+                <th>Soportado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
