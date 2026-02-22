@@ -162,6 +162,7 @@ section h2 {
 
 .table-wrap {
   overflow: auto;
+  max-height: 420px;
   border: 1px solid #d7dee8;
   border-radius: 8px;
   background: #fff;
@@ -185,5 +186,5 @@ thead th {
   background: #f8fafc;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
 }
