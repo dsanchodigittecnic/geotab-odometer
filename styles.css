@@ -110,6 +110,25 @@ button:hover {
   display: none;
 }
 
+.tab-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.tab-filters label {
+  font-size: 12px;
+}
+
+.tab-filters select {
+  min-width: 140px;
+  padding: 6px 8px;
+  border: 1px solid #c6d0dc;
+  border-radius: 6px;
+  background: #fff;
+}
+
 section {
   margin-bottom: 20px;
 }

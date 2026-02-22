@@ -48,6 +48,24 @@
         <button id="tabOdometer" class="tab active" type="button">Odometro</button>
         <button id="tabEngine" class="tab" type="button">HorasMotor</button>
       </div>
+      <div class="tab-filters">
+        <label>
+          Filtro Odometro
+          <select id="odometerSourceFilter">
+            <option value="ALL">Todos</option>
+            <option value="ODOMETRO">ODOMETRO</option>
+            <option value="GPS">GPS</option>
+          </select>
+        </label>
+        <label>
+          Filtro HorasMotor
+          <select id="engineSourceFilter">
+            <option value="ALL">Todos</option>
+            <option value="MOTOR">MOTOR</option>
+            <option value="GPS">GPS</option>
+          </select>
+        </label>
+      </div>
 
       <section id="odometerSection">
         <h2>Odometro</h2>

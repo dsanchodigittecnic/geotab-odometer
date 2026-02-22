@@ -131,6 +131,10 @@
     var state = {
       loaded: false,
       rows: [],
+      filter: {
+        odometerSource: "ALL",
+        engineSource: "ALL",
+      },
       sort: {
         key: "vehicle",
         direction: "asc",
@@ -330,6 +334,13 @@
       return sorted;
     }
 
+    function filterOdometerRows(rows) {
+      if (state.filter.odometerSource === "ALL") return rows.slice();
+      return rows.filter(function (row) {
+        return row.source === state.filter.odometerSource;
+      });
+    }
+
     function updateOdometerHeaderSortUi() {
       var headers = document.querySelectorAll("#odometerTable thead th[data-sort-key]");
       headers.forEach(function (th) {
@@ -372,6 +383,13 @@
       return sorted;
     }
 
+    function filterEngineRows(rows) {
+      if (state.filter.engineSource === "ALL") return rows.slice();
+      return rows.filter(function (row) {
+        return row.engineSource === state.filter.engineSource;
+      });
+    }
+
     function updateEngineHeaderSortUi() {
       var headers = document.querySelectorAll("#engineTable thead th[data-engine-sort-key]");
       headers.forEach(function (th) {
@@ -389,8 +407,8 @@
       var odometerBody = document.querySelector("#odometerTable tbody");
       var engineBody = document.querySelector("#engineTable tbody");
       if (!odometerBody || !engineBody) return;
-      var odometerRows = sortOdometerRows(rows);
-      var engineRows = sortEngineRows(rows);
+      var odometerRows = sortOdometerRows(filterOdometerRows(rows));
+      var engineRows = sortEngineRows(filterEngineRows(rows));
       updateOdometerHeaderSortUi();
       updateEngineHeaderSortUi();
 
@@ -575,6 +593,8 @@
       var lookbackInput = document.getElementById("lookbackDays");
       var tabOdometer = document.getElementById("tabOdometer");
       var tabEngine = document.getElementById("tabEngine");
+      var odometerSourceFilter = document.getElementById("odometerSourceFilter");
+      var engineSourceFilter = document.getElementById("engineSourceFilter");
 
       tokenInput.value = localStorage.getItem(TOKEN_STORAGE_KEY) || "";
       regionInput.value = localStorage.getItem(REGION_STORAGE_KEY) || "2";
@@ -593,6 +613,22 @@
         });
       }
       setActiveTab("odometer");
+
+      if (odometerSourceFilter) {
+        odometerSourceFilter.value = state.filter.odometerSource;
+        odometerSourceFilter.addEventListener("change", function () {
+          state.filter.odometerSource = odometerSourceFilter.value || "ALL";
+          renderTables(state.rows);
+        });
+      }
+
+      if (engineSourceFilter) {
+        engineSourceFilter.value = state.filter.engineSource;
+        engineSourceFilter.addEventListener("change", function () {
+          state.filter.engineSource = engineSourceFilter.value || "ALL";
+          renderTables(state.rows);
+        });
+      }
 
       var odometerHeaders = document.querySelectorAll("#odometerTable thead th[data-sort-key]");
       odometerHeaders.forEach(function (th) {
