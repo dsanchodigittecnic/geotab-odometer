@@ -5,11 +5,15 @@ Este Add-In replica la logica de `app.py` en una UI dentro de MyGeotab.
 ## Funcionalidades
 
 - Dos tabs:
-  - `odometro`
+  - `Odómetro`
   - `HorasMotor`
 - Resumen superior con contadores:
   - ODOMETRO vs GPS
   - MOTOR vs GPS
+- Filtros:
+  - `marca modelo` (aplica a ambos tabs)
+  - fuente en `Odómetro`: `Todos / ODOMETRO / GPS`
+  - fuente en `HorasMotor`: `Todos / MOTOR / GPS`
 - Tabla `odometro` con columnas:
   - `vehiculo`, `marca modelo`, `fuente`, `odometro_km`, `hace_cuanto`, `fecha_dato`, `Soportado`
 - Tabla `HorasMotor` con columnas:

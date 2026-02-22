@@ -129,6 +129,10 @@ button:hover {
   background: #fff;
 }
 
+.tab-filters input {
+  min-width: 220px;
+}
+
 section {
   margin-bottom: 20px;
 }

@@ -136,6 +136,7 @@
       loaded: false,
       rows: [],
       filter: {
+        brandModelQuery: "",
         odometerSource: "ALL",
         engineSource: "ALL",
       },
@@ -339,8 +340,15 @@
     }
 
     function filterOdometerRows(rows) {
-      if (state.filter.odometerSource === "ALL") return rows.slice();
-      return rows.filter(function (row) {
+      var filtered = rows.slice();
+      if (state.filter.brandModelQuery) {
+        var query = state.filter.brandModelQuery.toLowerCase();
+        filtered = filtered.filter(function (row) {
+          return String(row.brandModel || "").toLowerCase().indexOf(query) >= 0;
+        });
+      }
+      if (state.filter.odometerSource === "ALL") return filtered;
+      return filtered.filter(function (row) {
         return row.source === state.filter.odometerSource;
       });
     }
@@ -388,8 +396,15 @@
     }
 
     function filterEngineRows(rows) {
-      if (state.filter.engineSource === "ALL") return rows.slice();
-      return rows.filter(function (row) {
+      var filtered = rows.slice();
+      if (state.filter.brandModelQuery) {
+        var query = state.filter.brandModelQuery.toLowerCase();
+        filtered = filtered.filter(function (row) {
+          return String(row.brandModel || "").toLowerCase().indexOf(query) >= 0;
+        });
+      }
+      if (state.filter.engineSource === "ALL") return filtered;
+      return filtered.filter(function (row) {
         return row.engineSource === state.filter.engineSource;
       });
     }
@@ -597,6 +612,7 @@
       var lookbackInput = document.getElementById("lookbackDays");
       var tabOdometer = document.getElementById("tabOdometer");
       var tabEngine = document.getElementById("tabEngine");
+      var brandModelFilter = document.getElementById("brandModelFilter");
       var odometerSourceFilter = document.getElementById("odometerSourceFilter");
       var engineSourceFilter = document.getElementById("engineSourceFilter");
 
@@ -617,6 +633,14 @@
         });
       }
       setActiveTab("odometer");
+
+      if (brandModelFilter) {
+        brandModelFilter.value = state.filter.brandModelQuery;
+        brandModelFilter.addEventListener("input", function () {
+          state.filter.brandModelQuery = (brandModelFilter.value || "").trim();
+          renderTables(state.rows);
+        });
+      }
 
       if (odometerSourceFilter) {
         odometerSourceFilter.value = state.filter.odometerSource;
