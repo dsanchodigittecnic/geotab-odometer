@@ -109,6 +109,8 @@
     var engineSection = document.getElementById("engineSection");
     var tabOdometer = document.getElementById("tabOdometer");
     var tabEngine = document.getElementById("tabEngine");
+    var odometerFilterWrap = document.getElementById("odometerFilterWrap");
+    var engineFilterWrap = document.getElementById("engineFilterWrap");
     if (!odometerSection || !engineSection || !tabOdometer || !tabEngine) return;
 
     var showOdometer = tabName !== "engine";
@@ -116,6 +118,8 @@
     engineSection.classList.toggle("hidden", showOdometer);
     tabOdometer.classList.toggle("active", showOdometer);
     tabEngine.classList.toggle("active", !showOdometer);
+    if (odometerFilterWrap) odometerFilterWrap.classList.toggle("hidden", !showOdometer);
+    if (engineFilterWrap) engineFilterWrap.classList.toggle("hidden", showOdometer);
   }
 
   function chunkArray(values, size) {
