@@ -5,8 +5,8 @@
   var ODOMETER_ADJUSTMENT_DIAGNOSTIC_ID = "DiagnosticOdometerAdjustmentId";
   var ENGINE_HOURS_DIAGNOSTIC_ID = "DiagnosticEngineHoursId";
   var MYADMIN_URL = "https://myadmin.geotab.com/api/v1/MinedVehicleData/ByVins";
+  var MYADMIN_REGION_ID = 2;
   var TOKEN_STORAGE_KEY = "odometro.myadmin.token";
-  var REGION_STORAGE_KEY = "odometro.myadmin.region";
   var MODEL_ALERT_GPS_PCT = 20;
 
   function normalizeVin(vin) {
@@ -83,13 +83,11 @@
     var loadingIndicator = document.getElementById("loadingIndicator");
     var refreshBtn = document.getElementById("refreshBtn");
     var downloadBtn = document.getElementById("downloadBtn");
-    var regionInput = document.getElementById("regionId");
     var tokenInput = document.getElementById("myadminToken");
 
     if (loadingIndicator) loadingIndicator.classList.toggle("hidden", !isLoading);
     if (refreshBtn) refreshBtn.disabled = isLoading;
     if (downloadBtn) downloadBtn.disabled = isLoading;
-    if (regionInput) regionInput.disabled = isLoading;
     if (tokenInput) tokenInput.disabled = isLoading;
   }
 
@@ -641,12 +639,9 @@
       try {
         setStatus("Cargando datos desde primera conexion...");
         var tokenInput = document.getElementById("myadminToken");
-        var regionInput = document.getElementById("regionId");
 
         var token = (tokenInput.value || "").trim();
-        var regionId = Number(regionInput.value || "2");
-
-        localStorage.setItem(REGION_STORAGE_KEY, String(regionId));
+        var regionId = MYADMIN_REGION_ID;
         if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token);
 
         var toDate = new Date();
@@ -750,7 +745,6 @@
       var refreshBtn = document.getElementById("refreshBtn");
       var downloadBtn = document.getElementById("downloadBtn");
       var tokenInput = document.getElementById("myadminToken");
-      var regionInput = document.getElementById("regionId");
       var tabOdometer = document.getElementById("tabOdometer");
       var tabEngine = document.getElementById("tabEngine");
       var brandModelFilter = document.getElementById("brandModelFilter");
@@ -759,7 +753,6 @@
       var modelHeaders = document.querySelectorAll("#modelSummaryTable thead th[data-model-sort-key]");
 
       tokenInput.value = localStorage.getItem(TOKEN_STORAGE_KEY) || "";
-      regionInput.value = localStorage.getItem(REGION_STORAGE_KEY) || "2";
 
       refreshBtn.addEventListener("click", loadData);
       downloadBtn.addEventListener("click", downloadExcel);
