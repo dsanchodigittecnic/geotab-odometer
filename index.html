@@ -23,6 +23,10 @@
           </label>
           <button id="refreshBtn" type="button">Actualizar</button>
           <button id="downloadBtn" type="button">Descargar Excel</button>
+          <div id="loadingIndicator" class="loading hidden" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Cargando...</span>
+          </div>
         </div>
       </header>
 
@@ -42,6 +46,10 @@
 
       <section id="modelSummarySection">
         <h2>Resumen por marca modelo</h2>
+        <p class="legend">
+          <span class="legend-box"></span>
+          Fila roja: <strong>% GPS (odómetro o motor) &gt; 20%</strong>. Pasa el ratón por encima para ver el motivo.
+        </p>
         <div class="table-wrap">
           <table id="modelSummaryTable">
             <thead>

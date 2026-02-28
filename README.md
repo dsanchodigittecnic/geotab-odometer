@@ -12,7 +12,9 @@ Este Add-In replica la logica de `app.py` en una UI dentro de MyGeotab.
   - MOTOR vs GPS
 - Resumen por `marca modelo`:
   - total, ODOMETRO, GPS (odometro), % GPS (odometro), MOTOR, GPS (motor), % GPS (motor)
-  - alerta visual cuando `% GPS (odometro) > 20%`
+  - alerta visual cuando `% GPS (odometro) > 20%` o `% GPS (motor) > 20%`
+  - leyenda visible en pantalla para interpretar la alerta roja
+  - tooltip al pasar por encima de la fila roja con el motivo (odometro, motor o ambos)
   - clic en `marca modelo` para filtrar el detalle automaticamente
 - Filtros:
   - `marca modelo` (aplica a ambos tabs)

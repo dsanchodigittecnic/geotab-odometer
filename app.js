@@ -79,6 +79,20 @@
     if (line) line.textContent = message;
   }
 
+  function setLoading(isLoading) {
+    var loadingIndicator = document.getElementById("loadingIndicator");
+    var refreshBtn = document.getElementById("refreshBtn");
+    var downloadBtn = document.getElementById("downloadBtn");
+    var regionInput = document.getElementById("regionId");
+    var tokenInput = document.getElementById("myadminToken");
+
+    if (loadingIndicator) loadingIndicator.classList.toggle("hidden", !isLoading);
+    if (refreshBtn) refreshBtn.disabled = isLoading;
+    if (downloadBtn) downloadBtn.disabled = isLoading;
+    if (regionInput) regionInput.disabled = isLoading;
+    if (tokenInput) tokenInput.disabled = isLoading;
+  }
+
   function updateSummary(rows) {
     var odometerCount = 0;
     var odometerGpsCount = 0;
@@ -500,10 +514,31 @@
       updateModelHeaderSortUi();
       body.innerHTML = summaryRows
         .map(function (row) {
-          var alertClass = row.odometerGpsPct > MODEL_ALERT_GPS_PCT ? "alert" : "";
+          var odoAlert = row.odometerGpsPct > MODEL_ALERT_GPS_PCT;
+          var motorAlert = row.motorGpsPct > MODEL_ALERT_GPS_PCT;
+          var alertClass = odoAlert || motorAlert ? "alert" : "";
+          var alertReason = "";
+          if (odoAlert && motorAlert) {
+            alertReason =
+              "Modelo con alto uso de GPS en odómetro (" +
+              fmtNumber(row.odometerGpsPct, 2) +
+              "%) y en motor (" +
+              fmtNumber(row.motorGpsPct, 2) +
+              "%). Esto indica que muchos vehículos no están reportando datos reales de bus/ECM.";
+          } else if (odoAlert) {
+            alertReason =
+              "Modelo con alto uso de GPS en odómetro (" +
+              fmtNumber(row.odometerGpsPct, 2) +
+              "%). Esto indica que muchos vehículos no están reportando odómetro real.";
+          } else if (motorAlert) {
+            alertReason =
+              "Modelo con alto uso de GPS en horas de motor (" +
+              fmtNumber(row.motorGpsPct, 2) +
+              "%). Esto indica que muchos vehículos no están reportando horas de motor reales.";
+          }
           var encodedModel = encodeURIComponent(row.brandModel);
           return (
-            "<tr class=\"" + alertClass + "\">" +
+            "<tr class=\"" + alertClass + "\" title=\"" + escapeHtml(alertReason) + "\">" +
             "<td><span class=\"model-click\" data-brand-model=\"" + encodedModel + "\">" + escapeHtml(row.brandModel) + "</span></td>" +
             "<td>" + escapeHtml(String(row.total)) + "</td>" +
             "<td>" + escapeHtml(String(row.odometerCount)) + "</td>" +
@@ -602,6 +637,7 @@
     }
 
     async function loadData() {
+      setLoading(true);
       try {
         setStatus("Cargando datos desde primera conexion...");
         var tokenInput = document.getElementById("myadminToken");
@@ -705,6 +741,8 @@
         setStatus("Listo. Filas: " + rows.length);
       } catch (error) {
         setStatus("Error: " + (error && error.message ? error.message : String(error)));
+      } finally {
+        setLoading(false);
       }
     }
 
