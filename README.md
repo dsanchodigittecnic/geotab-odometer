@@ -49,6 +49,7 @@ Este Add-In replica la logica de `app.py` en una UI dentro de MyGeotab.
 ## Notas
 
 - El token de `myadmin.geotab.com` se introduce en la UI del Add-In.
-- Se guardan en `localStorage`: token, `regionId`, `lookback`.
+- Se guardan en `localStorage`: token, `regionId`.
+- El rango de consulta se calcula automaticamente desde la primera conexion detectada (`activeFrom`) en la flota.
 - Si falla `ByVins` o no hay token:
   - `Soportado` y `marca modelo` pueden quedar vacios.

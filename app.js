@@ -7,7 +7,6 @@
   var MYADMIN_URL = "https://myadmin.geotab.com/api/v1/MinedVehicleData/ByVins";
   var TOKEN_STORAGE_KEY = "odometro.myadmin.token";
   var REGION_STORAGE_KEY = "odometro.myadmin.region";
-  var LOOKBACK_STORAGE_KEY = "odometro.lookback.days";
   var MODEL_ALERT_GPS_PCT = 20;
 
   function normalizeVin(vin) {
@@ -604,25 +603,32 @@
 
     async function loadData() {
       try {
-        setStatus("Cargando datos...");
-        var lookbackInput = document.getElementById("lookbackDays");
+        setStatus("Cargando datos desde primera conexion...");
         var tokenInput = document.getElementById("myadminToken");
         var regionInput = document.getElementById("regionId");
 
-        var lookbackDays = Number(lookbackInput.value || "30");
         var token = (tokenInput.value || "").trim();
         var regionId = Number(regionInput.value || "2");
 
-        localStorage.setItem(LOOKBACK_STORAGE_KEY, String(lookbackDays));
         localStorage.setItem(REGION_STORAGE_KEY, String(regionId));
         if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token);
 
         var toDate = new Date();
-        var fromDate = new Date(toDate.getTime() - lookbackDays * 24 * 60 * 60 * 1000);
         var toIso = toDate.toISOString();
-        var fromIso = fromDate.toISOString();
 
         var devices = await getAll("Device", {}, {});
+        var minActiveFrom = null;
+        devices.forEach(function (d) {
+          if (!d || !d.activeFrom) return;
+          var dt = new Date(d.activeFrom);
+          if (isNaN(dt.getTime())) return;
+          if (!minActiveFrom || dt < minActiveFrom) minActiveFrom = dt;
+        });
+        if (!minActiveFrom) {
+          minActiveFrom = new Date("2000-01-01T00:00:00.000Z");
+        }
+        var fromIso = minActiveFrom.toISOString();
+
         var statusInfos = await getAll("DeviceStatusInfo", {}, {});
 
         var statusDateByDevice = Object.create(null);
@@ -707,7 +713,6 @@
       var downloadBtn = document.getElementById("downloadBtn");
       var tokenInput = document.getElementById("myadminToken");
       var regionInput = document.getElementById("regionId");
-      var lookbackInput = document.getElementById("lookbackDays");
       var tabOdometer = document.getElementById("tabOdometer");
       var tabEngine = document.getElementById("tabEngine");
       var brandModelFilter = document.getElementById("brandModelFilter");
@@ -717,7 +722,6 @@
 
       tokenInput.value = localStorage.getItem(TOKEN_STORAGE_KEY) || "";
       regionInput.value = localStorage.getItem(REGION_STORAGE_KEY) || "2";
-      lookbackInput.value = localStorage.getItem(LOOKBACK_STORAGE_KEY) || "30";
 
       refreshBtn.addEventListener("click", loadData);
       downloadBtn.addEventListener("click", downloadExcel);
