@@ -4,6 +4,7 @@
   var ODOMETER_DIAGNOSTIC_ID = "DiagnosticOdometerId";
   var ODOMETER_ADJUSTMENT_DIAGNOSTIC_ID = "DiagnosticOdometerAdjustmentId";
   var ENGINE_HOURS_DIAGNOSTIC_ID = "DiagnosticEngineHoursId";
+  var ENGINE_HOURS_ADJUSTMENT_DIAGNOSTIC_ID = "DiagnosticEngineHoursAdjustmentId";
   var MYADMIN_URL = "https://myadmin.geotab.com/api/v1/MinedVehicleData/ByVins";
   var MYADMIN_REGION_ID = 2;
   var TOKEN_STORAGE_KEY = "odometro.myadmin.token";
@@ -324,6 +325,17 @@
       }
 
       return support;
+    }
+
+    async function getSupportByVinSafe(vins, token, regionId) {
+      try {
+        return await getSupportByVin(vins, token, regionId);
+      } catch (error) {
+        setStatus(
+          "ByVins no disponible. Se cargan datos base sin marca/modelo ni Soportado."
+        );
+        return {};
+      }
     }
 
     function sortOdometerRows(rows) {
@@ -672,6 +684,10 @@
         var odometerByDevice = await getLatestStatusByDevice(ODOMETER_DIAGNOSTIC_ID, fromIso, toIso);
         var engineByDevice = await getLatestStatusByDevice(ENGINE_HOURS_DIAGNOSTIC_ID, fromIso, toIso);
         var adjustmentByDevice = await getPointStatusByDevice(ODOMETER_ADJUSTMENT_DIAGNOSTIC_ID, toIso);
+        var engineAdjustmentByDevice = await getPointStatusByDevice(
+          ENGINE_HOURS_ADJUSTMENT_DIAGNOSTIC_ID,
+          toIso
+        );
 
         var vins = [];
         devices.forEach(function (d) {
@@ -683,7 +699,7 @@
         var supportByVin = {};
         if (token) {
           setStatus("Consultando soporte VIN en MyAdmin...");
-          supportByVin = await getSupportByVin(vins, token, regionId);
+          supportByVin = await getSupportByVinSafe(vins, token, regionId);
         }
 
         var rows = devices.map(function (device) {
@@ -710,6 +726,18 @@
           }
 
           var engineRecent = engineByDevice[deviceId];
+          var engineAdjustment = engineAdjustmentByDevice[deviceId];
+          var engineSource = engineRecent ? "MOTOR" : "GPS";
+          var engineHours = null;
+          var engineDate = null;
+
+          if (engineRecent) {
+            engineHours = engineSecondsToHours(engineRecent.data);
+            engineDate = engineRecent.dateTime;
+          } else if (engineAdjustment && engineAdjustment.data !== null && engineAdjustment.data !== undefined) {
+            engineHours = engineSecondsToHours(engineAdjustment.data);
+            engineDate = engineAdjustment.dateTime || statusDateByDevice[deviceId] || null;
+          }
 
           return {
             vehicle: name,
@@ -719,10 +747,10 @@
             dataDate: dataDate,
             ageMinutes: ageMinutes(dataDate),
             odometerSupported: support.odometer,
-            engineSource: engineRecent ? "MOTOR" : "GPS",
-            engineHours: engineRecent ? engineSecondsToHours(engineRecent.data) : null,
-            engineDate: engineRecent ? engineRecent.dateTime : null,
-            engineAgeMinutes: ageMinutes(engineRecent ? engineRecent.dateTime : null),
+            engineSource: engineSource,
+            engineHours: engineHours,
+            engineDate: engineDate,
+            engineAgeMinutes: ageMinutes(engineDate),
             engineSupported: support.engineHours,
           };
         });
