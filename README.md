@@ -24,7 +24,7 @@ Este Add-In replica la logica de `app.py` en una UI dentro de MyGeotab.
   - `vehiculo`, `marca modelo`, `fuente`, `odometro_km`, `hace_cuanto`, `fecha_dato`, `Soportado`
 - Tabla `HorasMotor` con columnas:
   - `vehiculo`, `marca modelo`, `motor`, `horas_motor`, `hace_cuanto`, `fecha_dato`, `Soportado`
-  - si no existe `DiagnosticEngineHoursId`, el Add-In intenta mostrar horas calculadas desde `DiagnosticEngineHoursAdjustmentId` manteniendo la fuente como `GPS`
+  - en `GPS` con `HorasMotor` se usan `horas_motor`, `fecha_dato` y `hace_cuanto` calculados desde `DiagnosticEngineHoursAdjustmentId`
 - Ordenacion por clic en cabeceras (asc/desc) en ambas tablas.
 - Exportacion a Excel (`reporte_odometro.xlsx`) con hojas:
   - `odometro`

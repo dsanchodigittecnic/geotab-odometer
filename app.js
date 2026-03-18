@@ -247,6 +247,45 @@
       return byDevice;
     }
 
+    async function getPointStatusForDevice(diagnosticId, deviceId, atIso) {
+      var rows = await getAll(
+        "StatusData",
+        {
+          deviceSearch: { id: deviceId },
+          diagnosticSearch: { id: diagnosticId },
+          fromDate: atIso,
+          toDate: atIso,
+        },
+        { resultsLimit: 1 }
+      );
+      return rows.length ? rows[0] : null;
+    }
+
+    async function getPointStatusForDevices(diagnosticId, deviceIds, atIso, batchSize) {
+      var byDevice = Object.create(null);
+      var uniqueIds = Array.from(new Set((deviceIds || []).filter(Boolean)));
+      var chunks = chunkArray(uniqueIds, batchSize || 20);
+
+      for (var i = 0; i < chunks.length; i += 1) {
+        var chunk = chunks[i];
+        var rows = await Promise.all(
+          chunk.map(function (deviceId) {
+            return getPointStatusForDevice(diagnosticId, deviceId, atIso).then(function (row) {
+              return { deviceId: deviceId, row: row };
+            });
+          })
+        );
+
+        rows.forEach(function (item) {
+          if (item && item.row) {
+            byDevice[item.deviceId] = item.row;
+          }
+        });
+      }
+
+      return byDevice;
+    }
+
     async function getSupportByVin(vins, token, regionId) {
       if (!token) return {};
       var cleanToken = token.trim().replace(/^Bearer\s+/i, "").replace(/^["']|["']$/g, "");
@@ -684,9 +723,16 @@
         var odometerByDevice = await getLatestStatusByDevice(ODOMETER_DIAGNOSTIC_ID, fromIso, toIso);
         var engineByDevice = await getLatestStatusByDevice(ENGINE_HOURS_DIAGNOSTIC_ID, fromIso, toIso);
         var adjustmentByDevice = await getPointStatusByDevice(ODOMETER_ADJUSTMENT_DIAGNOSTIC_ID, toIso);
-        var engineAdjustmentByDevice = await getPointStatusByDevice(
+        var engineMissingDeviceIds = devices
+          .map(function (device) {
+            return engineByDevice[device.id] ? null : device.id;
+          })
+          .filter(Boolean);
+        var engineAdjustmentByDevice = await getPointStatusForDevices(
           ENGINE_HOURS_ADJUSTMENT_DIAGNOSTIC_ID,
-          toIso
+          engineMissingDeviceIds,
+          toIso,
+          20
         );
 
         var vins = [];
