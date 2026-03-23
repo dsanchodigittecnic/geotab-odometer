@@ -617,6 +617,8 @@
           return (
             "<tr>" +
             "<td>" + escapeHtml(row.vehicle) + "</td>" +
+            "<td>" + escapeHtml(row.vin || "-") + "</td>" +
+            "<td>" + escapeHtml(row.serialNumber || "-") + "</td>" +
             "<td>" + escapeHtml(row.brandModel || "-") + "</td>" +
             "<td>" + escapeHtml(row.source) + "</td>" +
             "<td>" + escapeHtml(fmtNumber(row.odometerKm, 2)) + "</td>" +
@@ -633,6 +635,8 @@
           return (
             "<tr>" +
             "<td>" + escapeHtml(row.vehicle) + "</td>" +
+            "<td>" + escapeHtml(row.vin || "-") + "</td>" +
+            "<td>" + escapeHtml(row.serialNumber || "-") + "</td>" +
             "<td>" + escapeHtml(row.brandModel || "-") + "</td>" +
             "<td>" + escapeHtml(row.engineSource) + "</td>" +
             "<td>" + escapeHtml(fmtNumber(row.engineHours, 2)) + "</td>" +
@@ -658,6 +662,8 @@
       var odometerRows = state.rows.map(function (row) {
         return {
           vehiculo: row.vehicle,
+          VIN: row.vin || "",
+          "Número de serie": row.serialNumber || "",
           "marca modelo": row.brandModel || "",
           fuente: row.source,
           odometro_km: row.odometerKm,
@@ -670,6 +676,8 @@
       var engineRows = state.rows.map(function (row) {
         return {
           vehiculo: row.vehicle,
+          VIN: row.vin || "",
+          "Número de serie": row.serialNumber || "",
           "marca modelo": row.brandModel || "",
           motor: row.engineSource,
           horas_motor: row.engineHours,
@@ -752,6 +760,7 @@
           var deviceId = device.id;
           var name = device.name || deviceId;
           var vin = normalizeVin(device.vehicleIdentificationNumber);
+          var serialNumber = device.serialNumber != null ? String(device.serialNumber).trim() : "";
           var support = vin ? supportByVin[vin] || {} : {};
 
           var odometerRecent = odometerByDevice[deviceId];
@@ -787,6 +796,8 @@
 
           return {
             vehicle: name,
+            vin: vin || "",
+            serialNumber: serialNumber,
             brandModel: support.brandModel || "",
             source: source,
             odometerKm: odometerKm,
