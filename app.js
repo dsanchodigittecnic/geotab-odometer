@@ -9,6 +9,7 @@
   var MYADMIN_REGION_ID = 2;
   var TOKEN_STORAGE_KEY = "odometro.myadmin.token";
   var MODEL_ALERT_GPS_PCT = 20;
+  var TRIPS_LOOKBACK_DAYS = 7;
 
   function normalizeVin(vin) {
     if (!vin) return null;
@@ -289,6 +290,38 @@
       return byDevice;
     }
 
+    async function getTripCountsByDevice(deviceIds, fromDateIso, toDateIso, batchSize) {
+      var countsByDevice = Object.create(null);
+      var uniqueIds = Array.from(new Set((deviceIds || []).filter(Boolean)));
+      var chunks = chunkArray(uniqueIds, batchSize || 20);
+
+      for (var i = 0; i < chunks.length; i += 1) {
+        var chunk = chunks[i];
+        var rows = await Promise.all(
+          chunk.map(function (deviceId) {
+            return getAll(
+              "Trip",
+              {
+                deviceSearch: { id: deviceId },
+                fromDate: fromDateIso,
+                toDate: toDateIso,
+                includeOverlappedTrips: true,
+              },
+              { resultsLimit: 25000 }
+            ).then(function (trips) {
+              return { deviceId: deviceId, count: trips.length };
+            });
+          })
+        );
+
+        rows.forEach(function (item) {
+          countsByDevice[item.deviceId] = item.count;
+        });
+      }
+
+      return countsByDevice;
+    }
+
     async function getSupportByVin(vins, token, regionId) {
       if (!token) return {};
       var cleanToken = token.trim().replace(/^Bearer\s+/i, "").replace(/^["']|["']$/g, "");
@@ -394,7 +427,7 @@
         } else if (key === "ageMinutes") {
           av = a.ageMinutes == null ? Infinity : a.ageMinutes;
           bv = b.ageMinutes == null ? Infinity : b.ageMinutes;
-        } else if (key === "odometerKm" || key === "odometerSupported") {
+        } else if (key === "odometerKm" || key === "odometerSupported" || key === "tripsLast7Days") {
           av = av == null ? -Infinity : Number(av);
           bv = bv == null ? -Infinity : Number(bv);
         } else {
@@ -462,7 +495,7 @@
         } else if (key === "engineAgeMinutes") {
           av = a.engineAgeMinutes == null ? Infinity : a.engineAgeMinutes;
           bv = b.engineAgeMinutes == null ? Infinity : b.engineAgeMinutes;
-        } else if (key === "engineHours" || key === "engineSupported") {
+        } else if (key === "engineHours" || key === "engineSupported" || key === "tripsLast7Days") {
           av = av == null ? -Infinity : Number(av);
           bv = bv == null ? -Infinity : Number(bv);
         } else {
@@ -634,6 +667,7 @@
             "<td>" + escapeHtml(row.vehicle) + "</td>" +
             "<td>" + escapeHtml(row.vin || "-") + "</td>" +
             "<td>" + escapeHtml(row.serialNumber || "-") + "</td>" +
+            "<td>" + escapeHtml(String(row.tripsLast7Days != null ? row.tripsLast7Days : 0)) + "</td>" +
             "<td>" + escapeHtml(row.brandModel || "-") + "</td>" +
             "<td>" + escapeHtml(row.source) + "</td>" +
             "<td>" + escapeHtml(fmtNumber(row.odometerKm, 2)) + "</td>" +
@@ -652,6 +686,7 @@
             "<td>" + escapeHtml(row.vehicle) + "</td>" +
             "<td>" + escapeHtml(row.vin || "-") + "</td>" +
             "<td>" + escapeHtml(row.serialNumber || "-") + "</td>" +
+            "<td>" + escapeHtml(String(row.tripsLast7Days != null ? row.tripsLast7Days : 0)) + "</td>" +
             "<td>" + escapeHtml(row.brandModel || "-") + "</td>" +
             "<td>" + escapeHtml(row.engineSource) + "</td>" +
             "<td>" + escapeHtml(fmtNumber(row.engineHours, 2)) + "</td>" +
@@ -679,6 +714,7 @@
           vehiculo: row.vehicle,
           VIN: row.vin || "",
           "Número de serie": row.serialNumber || "",
+          viajes_7d: row.tripsLast7Days != null ? row.tripsLast7Days : 0,
           "marca modelo": row.brandModel || "",
           fuente: row.source,
           odometro_km: row.odometerKm,
@@ -693,6 +729,7 @@
           vehiculo: row.vehicle,
           VIN: row.vin || "",
           "Número de serie": row.serialNumber || "",
+          viajes_7d: row.tripsLast7Days != null ? row.tripsLast7Days : 0,
           "marca modelo": row.brandModel || "",
           motor: row.engineSource,
           horas_motor: row.engineHours,
@@ -720,6 +757,7 @@
 
         var toDate = new Date();
         var toIso = toDate.toISOString();
+        var tripsFromIso = new Date(toDate.getTime() - TRIPS_LOOKBACK_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
         var devices = await getAll("Device", {}, {});
         var minActiveFrom = null;
@@ -754,6 +792,15 @@
         var engineAdjustmentByDevice = await getPointStatusForDevices(
           ENGINE_HOURS_ADJUSTMENT_DIAGNOSTIC_ID,
           engineMissingDeviceIds,
+          toIso,
+          20
+        );
+        setStatus("Consultando viajes de los ultimos 7 dias...");
+        var tripCountsByDevice = await getTripCountsByDevice(
+          devices.map(function (device) {
+            return device.id;
+          }),
+          tripsFromIso,
           toIso,
           20
         );
@@ -813,6 +860,7 @@
             vehicle: name,
             vin: vin || "",
             serialNumber: serialNumber,
+            tripsLast7Days: tripCountsByDevice[deviceId] || 0,
             brandModel: support.brandModel || "",
             source: source,
             odometerKm: odometerKm,
