@@ -10,6 +10,21 @@
   var TOKEN_STORAGE_KEY = "odometro.myadmin.token";
   var MODEL_ALERT_GPS_PCT = 20;
   var TRIPS_LOOKBACK_DAYS = 7;
+  var IOX_LABELS_BY_TYPE = {
+    "4097": "IOX-IRIDIUM",
+    "4110": "IOX-NFCREADERA",
+    "4125": "IOX-GOTALK",
+    "4134": "IOX-BT",
+    "4135": "IOX-OUTPUT",
+    "4168": "IOX-UREADER",
+    "4241": "IOX-BRIDGE",
+    "4242": "IOX-GOTALK",
+  };
+
+  function normalizeText(value) {
+    if (value === null || value === undefined) return "";
+    return String(value).trim();
+  }
 
   function normalizeVin(vin) {
     if (!vin) return null;
@@ -74,6 +89,82 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  function getGoLabel(device) {
+    var productId = normalizeText(device && device.productId);
+    if (productId) return productId.toUpperCase();
+
+    var deviceType = normalizeText(device && device.deviceType);
+    if (!deviceType) return null;
+    return deviceType.toUpperCase();
+  }
+
+  function getIoxLabel(type) {
+    var raw = normalizeText(type);
+    if (!raw) return null;
+    if (IOX_LABELS_BY_TYPE[raw]) return IOX_LABELS_BY_TYPE[raw];
+
+    var lowered = raw.toLowerCase();
+    if (lowered === "nfc") return "IOX-NFCREADERA";
+    if (lowered === "ureader") return "IOX-UREADER";
+    if (lowered === "bluetooth") return "IOX-BT";
+    if (lowered === "gotalk" || lowered === "gotalkv2") return "IOX-GOTALK";
+    if (lowered === "ioxbridge") return "IOX-BRIDGE";
+    if (lowered === "ioxoutput") return "IOX-OUTPUT";
+    if (lowered === "iridium") return "IOX-IRIDIUM";
+    if (/^iox-/i.test(raw)) return raw.toUpperCase();
+    return "IOX-" + raw.toUpperCase();
+  }
+
+  function extractHarnessCode(device) {
+    var fields = [
+      device && device.comment,
+      device && device.name,
+      device && device.productId,
+    ];
+
+    for (var i = 0; i < fields.length; i += 1) {
+      var match = normalizeText(fields[i]).match(/HRN-[A-Z0-9-]+/i);
+      if (match && match[0]) return match[0].toUpperCase();
+    }
+
+    return null;
+  }
+
+  function buildIoxLabelsByDevice(ioxAddOns) {
+    var labelsByDevice = Object.create(null);
+
+    (ioxAddOns || []).forEach(function (ioxAddOn) {
+      var deviceId = ioxAddOn && ioxAddOn.device && ioxAddOn.device.id;
+      var label = getIoxLabel(ioxAddOn && ioxAddOn.type);
+      if (!deviceId || !label) return;
+
+      if (!labelsByDevice[deviceId]) {
+        labelsByDevice[deviceId] = [];
+      }
+      if (labelsByDevice[deviceId].indexOf(label) < 0) {
+        labelsByDevice[deviceId].push(label);
+      }
+    });
+
+    return labelsByDevice;
+  }
+
+  function buildHardwareConfig(device, ioxLabelsByDevice) {
+    var parts = [];
+    var goLabel = getGoLabel(device);
+    var deviceId = device && device.id;
+    var ioxLabels = deviceId ? ioxLabelsByDevice[deviceId] || [] : [];
+    var harnessCode = extractHarnessCode(device);
+
+    if (goLabel) parts.push(goLabel);
+    ioxLabels.forEach(function (label) {
+      parts.push(label);
+    });
+    if (harnessCode) parts.push(harnessCode);
+
+    return parts.length ? parts.join(" + ") : "-";
   }
 
   function setStatus(message) {
@@ -668,6 +759,7 @@
             "<td>" + escapeHtml(row.vin || "-") + "</td>" +
             "<td>" + escapeHtml(row.serialNumber || "-") + "</td>" +
             "<td>" + escapeHtml(String(row.tripsLast7Days != null ? row.tripsLast7Days : 0)) + "</td>" +
+            "<td>" + escapeHtml(row.hardwareConfig || "-") + "</td>" +
             "<td>" + escapeHtml(row.brandModel || "-") + "</td>" +
             "<td>" + escapeHtml(row.source) + "</td>" +
             "<td>" + escapeHtml(fmtNumber(row.odometerKm, 2)) + "</td>" +
@@ -687,6 +779,7 @@
             "<td>" + escapeHtml(row.vin || "-") + "</td>" +
             "<td>" + escapeHtml(row.serialNumber || "-") + "</td>" +
             "<td>" + escapeHtml(String(row.tripsLast7Days != null ? row.tripsLast7Days : 0)) + "</td>" +
+            "<td>" + escapeHtml(row.hardwareConfig || "-") + "</td>" +
             "<td>" + escapeHtml(row.brandModel || "-") + "</td>" +
             "<td>" + escapeHtml(row.engineSource) + "</td>" +
             "<td>" + escapeHtml(fmtNumber(row.engineHours, 2)) + "</td>" +
@@ -715,6 +808,7 @@
           VIN: row.vin || "",
           "Número de serie": row.serialNumber || "",
           viajes_7d: row.tripsLast7Days != null ? row.tripsLast7Days : 0,
+          harneses: row.hardwareConfig || "",
           "marca modelo": row.brandModel || "",
           fuente: row.source,
           odometro_km: row.odometerKm,
@@ -730,6 +824,7 @@
           VIN: row.vin || "",
           "Número de serie": row.serialNumber || "",
           viajes_7d: row.tripsLast7Days != null ? row.tripsLast7Days : 0,
+          harneses: row.hardwareConfig || "",
           "marca modelo": row.brandModel || "",
           motor: row.engineSource,
           horas_motor: row.engineHours,
@@ -760,6 +855,9 @@
         var tripsFromIso = new Date(toDate.getTime() - TRIPS_LOOKBACK_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
         var devices = await getAll("Device", {}, {});
+        setStatus("Consultando configuracion de hardware...");
+        var ioxAddOns = await getAll("IoxAddOn", { connectedOnly: true }, {});
+        var ioxLabelsByDevice = buildIoxLabelsByDevice(ioxAddOns);
         var minActiveFrom = null;
         devices.forEach(function (d) {
           if (!d || !d.activeFrom) return;
@@ -861,6 +959,7 @@
             vin: vin || "",
             serialNumber: serialNumber,
             tripsLast7Days: tripCountsByDevice[deviceId] || 0,
+            hardwareConfig: buildHardwareConfig(device, ioxLabelsByDevice),
             brandModel: support.brandModel || "",
             source: source,
             odometerKm: odometerKm,
