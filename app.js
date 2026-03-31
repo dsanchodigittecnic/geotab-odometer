@@ -91,13 +91,25 @@
       .replace(/'/g, "&#039;");
   }
 
-  function getGoLabel(device) {
-    var productId = normalizeText(device && device.productId);
-    if (productId) return productId.toUpperCase();
+  function getDeviceTypeLabel(deviceType) {
+    var raw = normalizeText(deviceType);
+    if (!raw) return null;
 
-    var deviceType = normalizeText(device && device.deviceType);
-    if (!deviceType) return null;
-    return deviceType.toUpperCase();
+    if (/^go\d/i.test(raw)) return raw.toUpperCase();
+    if (/^custom/i.test(raw)) return raw;
+    return raw.toUpperCase();
+  }
+
+  function getGoLabel(device) {
+    var productId = normalizeText(device && device.productId).toUpperCase();
+    var deviceTypeLabel = getDeviceTypeLabel(device && device.deviceType);
+
+    if (productId && /[A-Z-]/.test(productId) && !/^HRN-/i.test(productId)) {
+      return productId;
+    }
+    if (deviceTypeLabel) return deviceTypeLabel;
+    if (productId && !/^\d+$/.test(productId)) return productId;
+    return "GO";
   }
 
   function getIoxLabel(type) {
@@ -114,7 +126,7 @@
     if (lowered === "ioxoutput") return "IOX-OUTPUT";
     if (lowered === "iridium") return "IOX-IRIDIUM";
     if (/^iox-/i.test(raw)) return raw.toUpperCase();
-    return "IOX-" + raw.toUpperCase();
+    return "IOX desconocido (" + raw.toUpperCase() + ")";
   }
 
   function extractHarnessCode(device) {
