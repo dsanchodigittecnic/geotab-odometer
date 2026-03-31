@@ -123,6 +123,7 @@
     var tabOdometer = document.getElementById("tabOdometer");
     var tabEngine = document.getElementById("tabEngine");
     var odometerFilterWrap = document.getElementById("odometerFilterWrap");
+    var odometerAgeFilterWrap = document.getElementById("odometerAgeFilterWrap");
     var engineFilterWrap = document.getElementById("engineFilterWrap");
     if (!odometerSection || !engineSection || !tabOdometer || !tabEngine) return;
 
@@ -132,6 +133,7 @@
     tabOdometer.classList.toggle("active", showOdometer);
     tabEngine.classList.toggle("active", !showOdometer);
     if (odometerFilterWrap) odometerFilterWrap.classList.toggle("hidden", !showOdometer);
+    if (odometerAgeFilterWrap) odometerAgeFilterWrap.classList.toggle("hidden", !showOdometer);
     if (engineFilterWrap) engineFilterWrap.classList.toggle("hidden", showOdometer);
   }
 
@@ -151,6 +153,7 @@
       filter: {
         brandModelQuery: "",
         odometerSource: "ALL",
+        odometerAge: "ALL",
         engineSource: "ALL",
       },
       sort: {
@@ -407,6 +410,7 @@
     }
 
     function filterOdometerRows(rows) {
+      var sevenDaysMinutes = 7 * 24 * 60;
       var filtered = rows.slice();
       if (state.filter.brandModelQuery) {
         var query = state.filter.brandModelQuery.toLowerCase();
@@ -414,10 +418,21 @@
           return String(row.brandModel || "").toLowerCase().indexOf(query) >= 0;
         });
       }
-      if (state.filter.odometerSource === "ALL") return filtered;
-      return filtered.filter(function (row) {
-        return row.source === state.filter.odometerSource;
-      });
+      if (state.filter.odometerSource !== "ALL") {
+        filtered = filtered.filter(function (row) {
+          return row.source === state.filter.odometerSource;
+        });
+      }
+      if (state.filter.odometerAge === "OLDER_THAN_7_DAYS") {
+        filtered = filtered.filter(function (row) {
+          return row.ageMinutes != null && row.ageMinutes > sevenDaysMinutes;
+        });
+      } else if (state.filter.odometerAge === "WITHIN_7_DAYS") {
+        filtered = filtered.filter(function (row) {
+          return row.ageMinutes != null && row.ageMinutes <= sevenDaysMinutes;
+        });
+      }
+      return filtered;
     }
 
     function updateOdometerHeaderSortUi() {
@@ -834,6 +849,7 @@
       var tabEngine = document.getElementById("tabEngine");
       var brandModelFilter = document.getElementById("brandModelFilter");
       var odometerSourceFilter = document.getElementById("odometerSourceFilter");
+      var odometerAgeFilter = document.getElementById("odometerAgeFilter");
       var engineSourceFilter = document.getElementById("engineSourceFilter");
       var modelHeaders = document.querySelectorAll("#modelSummaryTable thead th[data-model-sort-key]");
 
@@ -865,6 +881,14 @@
         odometerSourceFilter.value = state.filter.odometerSource;
         odometerSourceFilter.addEventListener("change", function () {
           state.filter.odometerSource = odometerSourceFilter.value || "ALL";
+          renderTables(state.rows);
+        });
+      }
+
+      if (odometerAgeFilter) {
+        odometerAgeFilter.value = state.filter.odometerAge;
+        odometerAgeFilter.addEventListener("change", function () {
+          state.filter.odometerAge = odometerAgeFilter.value || "ALL";
           renderTables(state.rows);
         });
       }
